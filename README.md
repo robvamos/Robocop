@@ -13,6 +13,7 @@ La cartella `feed/` contiene solo documenti sorgente da analizzare. Gli artefatt
 - `src/services/control_agent/` - servizio Node.js portabile PC/cloud per broker, comandi, telemetria e API
 - `src/services/ai_agent/` - microservizio Python opzionale per AI locale, OpenCV e modelli pesanti
 - `src/services/rover_controller/` - controller Python per Raspberry Pi sul rover
+- `src/firmware/esp32_s3_rover/` - firmware ESP32-S3 per retrofit base Nikko
 - `src/services/simulator/` - rover simulato compatibile con le API reali
 - `src/apps/mobile_flutter/` - app mobile Flutter
 - `src/apps/dashboard_web/` - dashboard React/Vite
@@ -34,6 +35,8 @@ This project is intended to be connected to a GitHub repository once GitHub acce
 - `docs/codex_skills.md`
 - `docs/deployment_options.md`
 - `docs/free_deploy_matrix.md`
+- `docs/hardware_nikko_super_dominator.md`
+- `docs/hardware/nikko_super_dominator_retrofit.md`
 - `docs/media_transport.md`
 - `docs/turn_server.md`
 - `infra/mqtt/topics.md`

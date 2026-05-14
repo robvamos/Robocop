@@ -2,6 +2,8 @@
 
 Servizio Python pensato per Raspberry Pi sul rover. Espone API locali per AI Agent, controlla motori e sensori, produce telemetria e stream video.
 
+Per la versione base a costo inferiore con ESP32-S3-CAM vedere anche `src/firmware/esp32_s3_rover`. Quel firmware espone API compatibili con `/drive`, `/stop` e `/status`, ma non sostituisce il controller Python quando servono Linux, WebRTC robusto o AI locale.
+
 ## Stack
 
 - Python 3.12+

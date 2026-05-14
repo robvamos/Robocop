@@ -33,6 +33,7 @@ La prima UI include:
 - controlli tilt camera;
 - riquadri telemetria;
 - pannello rete con WiFi scan, setup Bluetooth e setup USB.
+- modalita telecomando Nikko Super Dominator con leva velocita, leva direzione, trim velocita, trim direzione, ON/OFF, antenna/quartz.
 
 ## Template stile
 

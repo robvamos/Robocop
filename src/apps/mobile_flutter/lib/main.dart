@@ -97,7 +97,7 @@ class _RoverControlPageState extends State<RoverControlPage> {
           onChanged: (value) => setState(() => _mode = value),
         ),
         const SizedBox(height: 12),
-        _JoystickPanel(template: widget.template),
+        _NikkoRemotePanel(template: widget.template),
         const SizedBox(height: 12),
         _TelemetryGrid(template: widget.template),
         const SizedBox(height: 12),
@@ -147,7 +147,7 @@ class _RoverControlPageState extends State<RoverControlPage> {
                 onChanged: (value) => setState(() => _mode = value),
               ),
               const SizedBox(height: 12),
-              _JoystickPanel(template: widget.template),
+              _NikkoRemotePanel(template: widget.template),
               const SizedBox(height: 12),
               _NetworkPanel(
                 template: widget.template,
@@ -379,8 +379,8 @@ class _ModeSelector extends StatelessWidget {
   }
 }
 
-class _JoystickPanel extends StatelessWidget {
-  const _JoystickPanel({required this.template});
+class _NikkoRemotePanel extends StatelessWidget {
+  const _NikkoRemotePanel({required this.template});
 
   final AppTemplate template;
 
@@ -393,55 +393,107 @@ class _JoystickPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Guida', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Telecomando Nikko Super Dominator',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const Spacer(),
-              Text('x 0.00  y 0.00', style: TextStyle(color: template.muted)),
+              _PowerLamp(template: template),
             ],
           ),
+          Text(
+            'Layout ispirato al trasmettitore originale: leva velocita, leva direzione e cursori di regolazione.',
+            style: TextStyle(color: template.muted),
+          ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _Joystick(template: template)),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 82,
-                child: Column(
-                  children: [
-                    IconButton.filledTonal(
-                      tooltip: 'Camera su',
-                      onPressed: () {},
-                      icon: const Icon(Icons.keyboard_arrow_up),
-                    ),
-                    IconButton.filledTonal(
-                      tooltip: 'Centro camera',
-                      onPressed: () {},
-                      icon: const Icon(Icons.control_camera),
-                    ),
-                    IconButton.filledTonal(
-                      tooltip: 'Camera giu',
-                      onPressed: () {},
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                    ),
-                  ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 330;
+              final controls = [
+                Expanded(
+                  child: _OriginalLever(
+                    template: template,
+                    title: 'Velocita',
+                    topLabel: 'Avanti 2',
+                    centerLabel: 'Stop',
+                    bottomLabel: 'Retro',
+                    valueLabel: '+60%',
+                    icon: Icons.swap_vert,
+                  ),
                 ),
+                SizedBox(width: compact ? 8 : 12),
+                Expanded(
+                  child: _OriginalLever(
+                    template: template,
+                    title: 'Direzione',
+                    topLabel: 'Sinistra',
+                    centerLabel: 'Centro',
+                    bottomLabel: 'Destra',
+                    valueLabel: '0 deg',
+                    icon: Icons.compare_arrows,
+                    horizontal: true,
+                  ),
+                ),
+              ];
+
+              return Row(children: controls);
+            },
+          ),
+          const SizedBox(height: 12),
+          _TrimSlider(
+            template: template,
+            icon: Icons.tune,
+            label: 'Cursore regolazione velocita',
+            value: 0,
+          ),
+          _TrimSlider(
+            template: template,
+            icon: Icons.settings_input_component,
+            label: 'Cursore regolazione direzione',
+            value: 0,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.power_settings_new),
+                label: const Text('ON/OFF'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.settings_remote),
+                label: const Text('Quartz 27 MHz'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.linear_scale),
+                label: const Text('Antenna'),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.speed),
-              Expanded(
-                child: Slider(
-                  value: 60,
-                  min: 0,
-                  max: 100,
-                  divisions: 10,
-                  label: '60%',
-                  onChanged: (_) {},
-                ),
+              IconButton.filledTonal(
+                tooltip: 'Camera su',
+                onPressed: () {},
+                icon: const Icon(Icons.keyboard_arrow_up),
               ),
-              const Text('60%'),
+              IconButton.filledTonal(
+                tooltip: 'Centro camera',
+                onPressed: () {},
+                icon: const Icon(Icons.control_camera),
+              ),
+              IconButton.filledTonal(
+                tooltip: 'Camera giu',
+                onPressed: () {},
+                icon: const Icon(Icons.keyboard_arrow_down),
+              ),
+              const Spacer(),
+              Text('Camera', style: TextStyle(color: template.muted)),
             ],
           ),
         ],
@@ -450,27 +502,199 @@ class _JoystickPanel extends StatelessWidget {
   }
 }
 
-class _Joystick extends StatelessWidget {
-  const _Joystick({required this.template});
+class _OriginalLever extends StatelessWidget {
+  const _OriginalLever({
+    required this.template,
+    required this.title,
+    required this.topLabel,
+    required this.centerLabel,
+    required this.bottomLabel,
+    required this.valueLabel,
+    required this.icon,
+    this.horizontal = false,
+  });
+
+  final AppTemplate template;
+  final String title;
+  final String topLabel;
+  final String centerLabel;
+  final String bottomLabel;
+  final String valueLabel;
+  final IconData icon;
+  final bool horizontal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: template.primary, size: 18),
+            const SizedBox(width: 6),
+            Expanded(child: Text(title)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        AspectRatio(
+          aspectRatio: 0.78,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: template.surfaceAlt,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: horizontal ? _horizontalLever(context) : _verticalLever(context),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          valueLabel,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ],
+    );
+  }
+
+  Widget _verticalLever(BuildContext context) {
+    return Column(
+      children: [
+        Text(topLabel, style: TextStyle(color: template.muted)),
+        Expanded(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(width: 12, color: template.background),
+              Positioned(
+                top: 34,
+                child: _LeverKnob(template: template),
+              ),
+            ],
+          ),
+        ),
+        Text(centerLabel, style: TextStyle(color: template.muted)),
+        const SizedBox(height: 6),
+        Text(bottomLabel, style: TextStyle(color: template.muted)),
+      ],
+    );
+  }
+
+  Widget _horizontalLever(BuildContext context) {
+    return Column(
+      children: [
+        Text(centerLabel, style: TextStyle(color: template.muted)),
+        Expanded(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(height: 12, color: template.background),
+              _LeverKnob(template: template),
+              Positioned(left: 0, child: Text(topLabel, style: TextStyle(color: template.muted))),
+              Positioned(right: 0, child: Text(bottomLabel, style: TextStyle(color: template.muted))),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LeverKnob extends StatelessWidget {
+  const _LeverKnob({required this.template});
 
   final AppTemplate template;
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: template.surfaceAlt,
-          borderRadius: BorderRadius.circular(8),
+    return Container(
+      width: 62,
+      height: 62,
+      decoration: BoxDecoration(
+        color: template.primary,
+        shape: BoxShape.circle,
+        border: Border.all(color: template.text, width: 2),
+      ),
+      child: const Icon(Icons.open_with, color: Colors.black),
+    );
+  }
+}
+
+class _TrimSlider extends StatelessWidget {
+  const _TrimSlider({
+    required this.template,
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final AppTemplate template;
+  final IconData icon;
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: template.secondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Slider(
+            value: value,
+            min: -1,
+            max: 1,
+            divisions: 20,
+            label: '0',
+            onChanged: (_) {},
+          ),
         ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(Icons.add, color: template.muted, size: 96),
-            Container(
-              width: 74,
-              height: 74,
+        SizedBox(
+          width: 96,
+          child: Text(
+            label,
+            style: TextStyle(color: template.muted),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PowerLamp extends StatelessWidget {
+  const _PowerLamp({required this.template});
+
+  final AppTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: template.success,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: template.success.withOpacity(0.5),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'ON',
+          style: TextStyle(color: template.success),
+        ),
+      ],
+    );
+  }
+}
               decoration: BoxDecoration(
                 color: template.primary,
                 shape: BoxShape.circle,
