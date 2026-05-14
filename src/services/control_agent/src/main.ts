@@ -15,7 +15,7 @@ mqtt.connect(async (payload) => {
   const command = parseCommand(payload);
   if (command.type === 'drive') {
     safety.markCommand();
-  } else {
+  } else if (command.type === 'stop') {
     safety.acknowledgeStop();
   }
   await rover.send(command);

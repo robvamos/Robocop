@@ -1,8 +1,14 @@
-class CameraStream:
-    """Stream video rover.
+class CameraController:
+    """Astrazione minima del modulo camera per controller reale ed emulatori."""
 
-    MVP: MJPEG via libcamera/OpenCV. Evoluzione: RTSP/WebRTC tramite AI Agent.
-    """
+    def __init__(self) -> None:
+        self.enabled = False
 
-    async def mjpeg(self):
-        raise NotImplementedError("MJPEG camera stream da implementare su Raspberry")
+    def set_power(self, enabled: bool) -> None:
+        self.enabled = enabled
+
+    def status(self) -> dict:
+        return {
+            "enabled": self.enabled,
+            "streaming": self.enabled,
+        }

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+from .camera import CameraController
 from .credential_store import CredentialStore
 from .motors import MotorController
 from .network_manager import NetworkBackend, NetworkManager
@@ -11,6 +12,7 @@ from .sensors import SensorReader
 app = FastAPI(title="Robocop Rover Controller")
 
 motors = MotorController()
+camera = CameraController()
 sensors = SensorReader()
 watchdog = LocalWatchdog(motors)
 network_store = CredentialStore()
@@ -22,6 +24,10 @@ class DriveRequest(BaseModel):
     x: float = Field(ge=-1.0, le=1.0)
     y: float = Field(ge=-1.0, le=1.0)
     speed: int = Field(ge=0, le=100)
+
+
+class CameraPowerRequest(BaseModel):
+    enabled: bool
 
 
 @app.post("/drive")
@@ -37,6 +43,17 @@ async def stop() -> dict:
     return {"stopped": True}
 
 
+@app.post("/camera/power")
+async def camera_power(request: CameraPowerRequest) -> dict:
+    camera.set_power(request.enabled)
+    return {"accepted": True, "camera": camera.status()}
+
+
+@app.get("/camera/status")
+async def camera_status() -> dict:
+    return camera.status()
+
+
 @app.get("/status")
 async def status() -> dict:
     safety_stop = watchdog.enforce()
@@ -45,6 +62,7 @@ async def status() -> dict:
         "mode": "manual",
         "safety_stop": safety_stop,
         "drive": motors.last_drive,
+        "camera": camera.status(),
         "sensors": sensors.read(),
     }
 

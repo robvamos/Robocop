@@ -25,3 +25,49 @@ export type WebRtcFormState = {
   remotePeerId: string;
   stunUrl: string;
 };
+
+export type EmulatorStatus = {
+  batteryPct: number;
+  camera: {
+    enabled: boolean;
+  };
+  debug: {
+    lastOutcome: null | {
+      detail: string;
+      signal: string;
+    };
+  };
+  deviceId: string;
+  drive: {
+    speed: number;
+    x: number;
+    y: number;
+  };
+  motion: {
+    accelerationPct: number;
+    direction: string;
+    steerPct: number;
+    steering: string;
+    throttlePct: number;
+  };
+  network: {
+    interface: {
+      security: string;
+      ssid: string;
+    };
+  };
+  pwm: {
+    driveDuty: number;
+    steerDuty: number;
+  };
+  timedOut: boolean;
+};
+
+export type ArchitectureBlock = {
+  id: string;
+  title: string;
+  subtitle: string;
+  environment: string;
+  role: string;
+  io: string;
+};

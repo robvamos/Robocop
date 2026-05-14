@@ -13,6 +13,13 @@ export class RoverClient {
       return;
     }
 
+    if (command.type === 'camera_power') {
+      await this.post('/camera/power', {
+        enabled: command.enabled,
+      });
+      return;
+    }
+
     await this.stop();
   }
 

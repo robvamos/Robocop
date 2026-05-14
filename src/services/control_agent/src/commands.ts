@@ -15,9 +15,17 @@ export const stopCommandSchema = z.object({
   ts: z.string().optional(),
 });
 
+export const cameraPowerCommandSchema = z.object({
+  type: z.literal('camera_power'),
+  enabled: z.boolean(),
+  seq: z.number().int().optional(),
+  ts: z.string().optional(),
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   driveCommandSchema,
   stopCommandSchema,
+  cameraPowerCommandSchema,
 ]);
 
 export type RoverCommand = z.infer<typeof commandSchema>;

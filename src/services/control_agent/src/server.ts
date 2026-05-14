@@ -21,6 +21,8 @@ export function buildServer(rover: RoverClient, safety: SafetyManager) {
     const command = parseCommand(request.body);
     if (command.type === 'drive') {
       safety.markCommand();
+    } else if (command.type === 'stop') {
+      safety.acknowledgeStop();
     }
     await rover.send(command);
     return { accepted: true };
