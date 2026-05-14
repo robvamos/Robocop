@@ -1,39 +1,303 @@
 import 'package:flutter/material.dart';
 
+import 'templates/app_templates.dart';
+
 void main() {
   runApp(const RobocopApp());
 }
 
-class RobocopApp extends StatelessWidget {
+class RobocopApp extends StatefulWidget {
   const RobocopApp({super.key});
+
+  @override
+  State<RobocopApp> createState() => _RobocopAppState();
+}
+
+class _RobocopAppState extends State<RobocopApp> {
+  AppTemplate _template = appTemplates.first;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Robocop',
-      theme: ThemeData(useMaterial3: true),
-      home: const RoverControlPage(),
+      debugShowCheckedModeBanner: false,
+      theme: _template.toTheme(),
+      home: RoverControlPage(
+        template: _template,
+        onTemplateChanged: (template) {
+          setState(() => _template = template);
+        },
+      ),
     );
   }
 }
 
-class RoverControlPage extends StatelessWidget {
-  const RoverControlPage({super.key});
+class RoverControlPage extends StatefulWidget {
+  const RoverControlPage({
+    required this.template,
+    required this.onTemplateChanged,
+    super.key,
+  });
+
+  final AppTemplate template;
+  final ValueChanged<AppTemplate> onTemplateChanged;
+
+  @override
+  State<RoverControlPage> createState() => _RoverControlPageState();
+}
+
+class _RoverControlPageState extends State<RoverControlPage> {
+  String _mode = 'Manual';
+  bool _microphone = false;
+  bool _lights = false;
+  bool _relayMedia = false;
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 820;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Robocop')),
-      body: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      appBar: AppBar(
+        title: const Text('Robocop'),
+        actions: [
+          IconButton(
+            tooltip: 'Configurazione',
+            onPressed: () => _showSettings(context),
+            icon: const Icon(Icons.tune),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: isWide ? _wideLayout() : _compactLayout(),
+        ),
+      ),
+    );
+  }
+
+  Widget _compactLayout() {
+    return ListView(
+      children: [
+        _TopStatusBar(template: widget.template, relayMedia: _relayMedia),
+        const SizedBox(height: 12),
+        _VideoPanel(template: widget.template),
+        const SizedBox(height: 12),
+        _CommandStrip(
+          template: widget.template,
+          microphone: _microphone,
+          lights: _lights,
+          onMicrophoneChanged: (value) => setState(() => _microphone = value),
+          onLightsChanged: (value) => setState(() => _lights = value),
+          onStop: () {},
+        ),
+        const SizedBox(height: 12),
+        _ModeSelector(
+          value: _mode,
+          onChanged: (value) => setState(() => _mode = value),
+        ),
+        const SizedBox(height: 12),
+        _JoystickPanel(template: widget.template),
+        const SizedBox(height: 12),
+        _TelemetryGrid(template: widget.template),
+        const SizedBox(height: 12),
+        _NetworkPanel(
+          template: widget.template,
+          relayMedia: _relayMedia,
+          onRelayChanged: (value) => setState(() => _relayMedia = value),
+        ),
+      ],
+    );
+  }
+
+  Widget _wideLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 7,
+          child: ListView(
+            children: [
+              _TopStatusBar(template: widget.template, relayMedia: _relayMedia),
+              const SizedBox(height: 12),
+              _VideoPanel(template: widget.template),
+              const SizedBox(height: 12),
+              _TelemetryGrid(template: widget.template),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 360,
+          child: ListView(
+            children: [
+              _CommandStrip(
+                template: widget.template,
+                microphone: _microphone,
+                lights: _lights,
+                onMicrophoneChanged: (value) {
+                  setState(() => _microphone = value);
+                },
+                onLightsChanged: (value) => setState(() => _lights = value),
+                onStop: () {},
+              ),
+              const SizedBox(height: 12),
+              _ModeSelector(
+                value: _mode,
+                onChanged: (value) => setState(() => _mode = value),
+              ),
+              const SizedBox(height: 12),
+              _JoystickPanel(template: widget.template),
+              const SizedBox(height: 12),
+              _NetworkPanel(
+                template: widget.template,
+                relayMedia: _relayMedia,
+                onRelayChanged: (value) => setState(() => _relayMedia = value),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Template interfaccia',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              for (final template in appTemplates)
+                RadioListTile<AppTemplate>(
+                  value: template,
+                  groupValue: widget.template,
+                  onChanged: (value) {
+                    if (value != null) {
+                      widget.onTemplateChanged(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                  title: Text(template.name),
+                  subtitle: Text(template.description),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TopStatusBar extends StatelessWidget {
+  const _TopStatusBar({
+    required this.template,
+    required this.relayMedia,
+  });
+
+  final AppTemplate template;
+  final bool relayMedia;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      template: template,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          _StatusChip(
+            icon: Icons.directions_car,
+            label: 'Rover online',
+            color: template.success,
+          ),
+          _StatusChip(
+            icon: Icons.cloud_done,
+            label: 'Cloud ok',
+            color: template.primary,
+          ),
+          _StatusChip(
+            icon: relayMedia ? Icons.hub : Icons.link,
+            label: relayMedia ? 'Media relay' : 'Media diretto',
+            color: relayMedia ? template.warning : template.success,
+          ),
+          _StatusChip(
+            icon: Icons.battery_5_bar,
+            label: '82%',
+            color: template.secondary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoPanel extends StatelessWidget {
+  const _VideoPanel({required this.template});
+
+  final AppTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: template.surfaceAlt),
+        ),
+        child: Stack(
           children: [
-            Expanded(child: _VideoPlaceholder()),
-            SizedBox(height: 16),
-            _TelemetryPanel(),
-            SizedBox(height: 16),
-            _JoystickPlaceholder(),
+            Center(
+              child: Icon(
+                Icons.videocam,
+                color: template.muted,
+                size: 48,
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: 12,
+              child: _OverlayPill(
+                icon: Icons.radio_button_checked,
+                label: 'WEBRTC LIVE',
+                color: template.danger,
+              ),
+            ),
+            Positioned(
+              right: 12,
+              top: 12,
+              child: _OverlayPill(
+                icon: Icons.network_check,
+                label: '42 ms',
+                color: template.success,
+              ),
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Row(
+                children: [
+                  _RoundButton(icon: Icons.photo_camera, onPressed: () {}),
+                  const SizedBox(width: 8),
+                  _RoundButton(icon: Icons.fiber_manual_record, onPressed: () {}),
+                  const Spacer(),
+                  _RoundButton(icon: Icons.fullscreen, onPressed: () {}),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -41,35 +305,415 @@ class RoverControlPage extends StatelessWidget {
   }
 }
 
-class _VideoPlaceholder extends StatelessWidget {
-  const _VideoPlaceholder();
+class _CommandStrip extends StatelessWidget {
+  const _CommandStrip({
+    required this.template,
+    required this.microphone,
+    required this.lights,
+    required this.onMicrophoneChanged,
+    required this.onLightsChanged,
+    required this.onStop,
+  });
+
+  final AppTemplate template;
+  final bool microphone;
+  final bool lights;
+  final ValueChanged<bool> onMicrophoneChanged;
+  final ValueChanged<bool> onLightsChanged;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
-      child: const Center(child: Text('MJPEG/WebRTC video')),
+    return _Panel(
+      template: template,
+      child: Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: template.danger),
+              onPressed: onStop,
+              icon: const Icon(Icons.stop_circle),
+              label: const Text('STOP'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _ToggleIconButton(
+            active: microphone,
+            icon: microphone ? Icons.mic : Icons.mic_off,
+            tooltip: 'Microfono',
+            onChanged: onMicrophoneChanged,
+          ),
+          const SizedBox(width: 8),
+          _ToggleIconButton(
+            active: lights,
+            icon: lights ? Icons.flashlight_on : Icons.flashlight_off,
+            tooltip: 'Luci',
+            onChanged: onLightsChanged,
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _TelemetryPanel extends StatelessWidget {
-  const _TelemetryPanel();
+class _ModeSelector extends StatelessWidget {
+  const _ModeSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String value;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return const Text('Telemetry: battery, RSSI, speed, mode');
+    return SegmentedButton<String>(
+      segments: const [
+        ButtonSegment(value: 'Manual', icon: Icon(Icons.gamepad), label: Text('Manual')),
+        ButtonSegment(value: 'Patrol', icon: Icon(Icons.route), label: Text('Patrol')),
+        ButtonSegment(value: 'Track', icon: Icon(Icons.center_focus_strong), label: Text('Track')),
+      ],
+      selected: {value},
+      onSelectionChanged: (selection) => onChanged(selection.first),
+    );
   }
 }
 
-class _JoystickPlaceholder extends StatelessWidget {
-  const _JoystickPlaceholder();
+class _JoystickPanel extends StatelessWidget {
+  const _JoystickPanel({required this.template});
+
+  final AppTemplate template;
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: null,
-      child: Text('Joystick MQTT command source'),
+    return _Panel(
+      template: template,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text('Guida', style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              Text('x 0.00  y 0.00', style: TextStyle(color: template.muted)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _Joystick(template: template)),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 82,
+                child: Column(
+                  children: [
+                    IconButton.filledTonal(
+                      tooltip: 'Camera su',
+                      onPressed: () {},
+                      icon: const Icon(Icons.keyboard_arrow_up),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: 'Centro camera',
+                      onPressed: () {},
+                      icon: const Icon(Icons.control_camera),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: 'Camera giu',
+                      onPressed: () {},
+                      icon: const Icon(Icons.keyboard_arrow_down),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.speed),
+              Expanded(
+                child: Slider(
+                  value: 60,
+                  min: 0,
+                  max: 100,
+                  divisions: 10,
+                  label: '60%',
+                  onChanged: (_) {},
+                ),
+              ),
+              const Text('60%'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Joystick extends StatelessWidget {
+  const _Joystick({required this.template});
+
+  final AppTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: template.surfaceAlt,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.add, color: template.muted, size: 96),
+            Container(
+              width: 74,
+              height: 74,
+              decoration: BoxDecoration(
+                color: template.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.open_with, color: Colors.black),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TelemetryGrid extends StatelessWidget {
+  const _TelemetryGrid({required this.template});
+
+  final AppTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('Batteria', '82%', Icons.battery_5_bar, template.success),
+      ('RSSI', '-58 dBm', Icons.wifi, template.primary),
+      ('Velocita', '0.32 m/s', Icons.speed, template.secondary),
+      ('Ostacolo', '46 cm', Icons.warning_amber, template.warning),
+      ('Heading', '142 deg', Icons.explore, template.primary),
+      ('CPU rover', '38%', Icons.memory, template.secondary),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 190,
+        mainAxisExtent: 86,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return _Panel(
+          template: template,
+          child: Row(
+            children: [
+              Icon(item.$3, color: item.$4),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.$1, style: TextStyle(color: template.muted)),
+                    Text(
+                      item.$2,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NetworkPanel extends StatelessWidget {
+  const _NetworkPanel({
+    required this.template,
+    required this.relayMedia,
+    required this.onRelayChanged,
+  });
+
+  final AppTemplate template;
+  final bool relayMedia;
+  final ValueChanged<bool> onRelayChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      template: template,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text('Rete e setup', style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              Switch(value: relayMedia, onChanged: onRelayChanged),
+            ],
+          ),
+          Text(
+            relayMedia ? 'TURN fallback attivo' : 'WebRTC diretto preferito',
+            style: TextStyle(color: relayMedia ? template.warning : template.success),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.wifi_find),
+                label: const Text('Scansiona WiFi'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.bluetooth),
+                label: const Text('Setup BT'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.usb),
+                label: const Text('Setup USB'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  const _Panel({
+    required this.template,
+    required this.child,
+  });
+
+  final AppTemplate template;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: template.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: template.surfaceAlt),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 18, color: color),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _OverlayPill extends StatelessWidget {
+  const _OverlayPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.62),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      tooltip: '',
+    );
+  }
+}
+
+class _ToggleIconButton extends StatelessWidget {
+  const _ToggleIconButton({
+    required this.active,
+    required this.icon,
+    required this.tooltip,
+    required this.onChanged,
+  });
+
+  final bool active;
+  final IconData icon;
+  final String tooltip;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      tooltip: tooltip,
+      isSelected: active,
+      onPressed: () => onChanged(!active),
+      icon: Icon(icon),
     );
   }
 }
