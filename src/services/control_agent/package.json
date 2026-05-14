@@ -1,0 +1,25 @@
+{
+  "name": "robocop-control-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "fastify": "latest",
+    "mqtt": "latest",
+    "pino": "latest",
+    "ws": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/ws": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

@@ -10,7 +10,8 @@ La cartella `feed/` contiene solo documenti sorgente da analizzare. Gli artefatt
 
 - `feed/` - documenti originali e input informativi, non output generati
 - `docs/` - architettura, moduli, decisioni e pianificazione
-- `src/services/ai_agent/` - bridge Python tra cloud broker, rover, video e AI
+- `src/services/control_agent/` - servizio Node.js portabile PC/cloud per broker, comandi, telemetria e API
+- `src/services/ai_agent/` - microservizio Python opzionale per AI locale, OpenCV e modelli pesanti
 - `src/services/rover_controller/` - controller Python per Raspberry Pi sul rover
 - `src/services/simulator/` - rover simulato compatibile con le API reali
 - `src/apps/mobile_flutter/` - app mobile Flutter

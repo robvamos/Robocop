@@ -1,6 +1,6 @@
-# AI Agent
+# AI Agent opzionale
 
-Servizio Python eseguito sul PC di casa. Fa da ponte tra Cloud Broker MQTT, rover in LAN, video, telemetria e futura AI locale.
+Microservizio Python opzionale per elaborazioni AI locali. La logica applicativa principale vive nel `control_agent` Node.js, piu' portabile su PC, container e cloud economico.
 
 ## Stack
 
@@ -10,6 +10,13 @@ Servizio Python eseguito sul PC di casa. Fa da ponte tra Cloud Broker MQTT, rove
 - paho-mqtt o gmqtt
 - OpenCV
 - aiortc in fase WebRTC
+
+## Responsabilita'
+
+- elaborare frame con OpenCV;
+- eseguire modelli AI locali;
+- pubblicare eventi AI verso MQTT o Control Agent;
+- isolare dipendenze native Python dal servizio principale.
 
 ## Moduli
 

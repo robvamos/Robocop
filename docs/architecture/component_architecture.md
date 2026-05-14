@@ -15,7 +15,7 @@ Cloud Broker / Relay
         |
         | connessione outbound persistente
         v
-AI Agent su PC Casa
+Control Agent Node.js su PC Casa o cloud low-cost
         |
         | WiFi LAN
         v
@@ -52,7 +52,7 @@ Interfacce:
 - pubblica comandi su topic MQTT dedicati;
 - riceve stato e telemetria via MQTT;
 - recupera configurazioni e sessioni via API HTTPS;
-- apre stream video MJPEG/WebRTC tramite endpoint esposto dal cloud relay o dall'AI Agent tramite broker.
+- apre stream video MJPEG/WebRTC tramite endpoint esposto dal cloud relay o dal Control Agent tramite broker.
 
 ### 2.2 Cloud Broker
 
@@ -89,7 +89,7 @@ rover/{deviceId}/events
 
 Nota: evitare di pubblicare video raw su MQTT. MQTT va bene per comandi, stato ed eventi; il video deve usare MJPEG/WebRTC/RTSP relay.
 
-### 2.3 AI Agent su PC Casa
+### 2.3 Control Agent su PC Casa o cloud low-cost
 
 Responsabilita':
 
@@ -98,39 +98,57 @@ Responsabilita':
 - validare, normalizzare e inoltrare i comandi al rover;
 - ricevere stream video dal rover;
 - esporre o ritrasmettere video verso il client;
-- elaborare frame con OpenCV/AI;
 - aggregare telemetria;
 - gestire logging locale;
 - implementare fail-safe e watchdog;
-- fornire API locali REST/WebSocket per debug e dashboard in LAN.
+- fornire API REST/WebSocket per app, dashboard e debug;
+- poter girare sul PC domestico, in container Docker o su VPS economica.
 
 Stack consigliato:
 
-- Python 3;
-- FastAPI per API locali e diagnostica;
-- asyncio per concorrenza;
-- paho-mqtt o gmqtt per MQTT;
-- OpenCV per elaborazione immagini;
-- aiortc per futura evoluzione WebRTC;
+- Node.js 20+;
+- TypeScript;
+- Fastify per API HTTP;
+- mqtt per MQTT;
+- ws per WebSocket;
+- zod per validazione payload;
 - SQLite per log e sessioni locali semplici;
-- systemd/NSSM o servizio Windows per esecuzione persistente.
+- Docker per portabilita';
+- systemd/NSSM o servizio Windows per esecuzione persistente su PC.
 
 Sottocomponenti interni:
 
 ```text
-AI Agent
+Control Agent
   - Config Manager
   - MQTT Bridge
   - Command Router
   - Rover Adapter
-  - Video Ingest
-  - Video Relay
+  - Video Relay leggero
   - Telemetry Collector
-  - AI Pipeline
   - Safety Manager
   - Local API
   - Logger
 ```
+
+### 2.3.1 AI Agent Python opzionale
+
+Le funzioni AI pesanti non devono rendere il Control Agent difficile da portare in cloud. Per questo la pipeline AI resta un componente opzionale separato.
+
+Responsabilita':
+
+- elaborazione frame con OpenCV;
+- object detection;
+- tracking;
+- SLAM o sperimentazioni locali;
+- pubblicazione eventi AI verso MQTT o Control Agent.
+
+Stack:
+
+- Python;
+- FastAPI;
+- OpenCV;
+- aiortc solo se il flusso WebRTC richiede elaborazione media lato Python.
 
 ### 2.4 Rover Controller
 
@@ -140,7 +158,7 @@ Responsabilita':
 - leggere sensori;
 - generare telemetria;
 - acquisire video;
-- accettare comandi dal PC Casa;
+- accettare comandi dal Control Agent;
 - applicare limiti di sicurezza locali;
 - fermarsi automaticamente in caso di perdita connessione;
 - scansionare reti WiFi disponibili;
@@ -248,7 +266,7 @@ Da prevedere gia' nell'MVP:
 Mobile App
   -> MQTT rover/{deviceId}/cmd
   -> Cloud Broker
-  -> AI Agent
+  -> Control Agent
   -> Rover Controller
   -> Driver motori
 ```
@@ -270,13 +288,13 @@ Regole:
 
 - inviare comandi joystick a frequenza controllata, ad esempio 10-20 Hz;
 - includere `seq` per scartare comandi vecchi;
-- AI Agent e Rover devono fermare i motori se non ricevono comandi entro un timeout configurabile.
+- Control Agent e Rover devono fermare i motori se non ricevono comandi entro un timeout configurabile.
 
 ### 3.2 Telemetria
 
 ```text
 Rover Controller
-  -> AI Agent
+  -> Control Agent
   -> MQTT rover/{deviceId}/telemetry
   -> Mobile App / Dashboard / Home Assistant
 ```
@@ -305,7 +323,7 @@ MVP:
 ```text
 Rover Camera
   -> MJPEG locale
-  -> AI Agent
+  -> Control Agent
   -> HTTP/WebSocket relay o endpoint protetto
   -> Mobile App
 ```
@@ -313,7 +331,7 @@ Rover Camera
 Evoluzione:
 
 ```text
-Rover Camera / AI Agent
+Rover Camera / Control Agent
   -> WebRTC
   -> TURN/STUN o relay cloud
   -> Mobile App / Browser
@@ -361,7 +379,7 @@ Requisiti minimi:
 
 Regole consigliate:
 
-- il rover non si collega direttamente al cloud nella prima fase, passa dall'AI Agent;
+- il rover non si collega direttamente al cloud nella prima fase, passa dal Control Agent;
 - nessuna porta aperta sul router di casa;
 - i comandi motore non devono essere eseguiti se il timestamp e' troppo vecchio;
 - default state del rover: fermo.
@@ -375,7 +393,8 @@ Obiettivo: validare controllo remoto e messaggistica.
 Componenti:
 
 - broker MQTT cloud;
-- AI Agent Python;
+- Control Agent Node.js;
+- AI Agent Python opzionale solo per pipeline AI;
 - rover simulato;
 - app Flutter con joystick;
 - telemetria fittizia;
@@ -384,7 +403,7 @@ Componenti:
 Output atteso:
 
 - da app si inviano comandi;
-- AI Agent li riceve;
+- Control Agent li riceve;
 - rover simulato risponde con stato e telemetria.
 
 ### Fase 2 - Rover reale base
@@ -439,6 +458,17 @@ robocop/
     mobile_flutter/
     dashboard_web/
   services/
+    control_agent/
+      src/
+        main.ts
+        config.ts
+        mqttBridge.ts
+        commands.ts
+        roverClient.ts
+        safety.ts
+        server.ts
+      package.json
+      tsconfig.json
     ai_agent/
       app/
         main.py
@@ -534,7 +564,7 @@ Payload:
 }
 ```
 
-### API locali AI Agent
+### API locali Control Agent
 
 Endpoint MVP:
 
@@ -576,7 +606,7 @@ Esempio aggiunta rete:
 - usare MQTT Cloud per il controllo e la telemetria;
 - non usare MQTT per lo streaming video continuo;
 - partire con MJPEG per ridurre complessita';
-- mettere il fail-safe sia nell'AI Agent sia nel Rover Controller;
+- mettere il fail-safe sia nel Control Agent sia nel Rover Controller;
 - trattare la connettivita' WiFi come componente core del rover, non come configurazione manuale una tantum;
 - usare payload JSON versionabili;
 - inserire sempre `deviceId`, `seq` e timestamp nei messaggi importanti;
@@ -607,7 +637,7 @@ Mitigazioni:
 
 La prima milestone concreta dovrebbe produrre:
 
-- `ai_agent` Python che si collega al broker MQTT;
+- `control_agent` Node.js che si collega al broker MQTT;
 - `simulator` che riceve comandi e pubblica telemetria;
 - topic MQTT documentati;
 - app o dashboard minimale con joystick;

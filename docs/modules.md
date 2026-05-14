@@ -7,7 +7,8 @@ Questo documento trasforma la specifica in una prima scomposizione implementativ
 ```text
 src/
   services/
-    ai_agent/          Python, FastAPI, asyncio, MQTT, OpenCV
+    control_agent/     Node.js, TypeScript, MQTT, WebSocket, API portabile PC/cloud
+    ai_agent/          Python opzionale per AI locale, OpenCV e modelli pesanti
     rover_controller/  Python su Raspberry Pi, GPIO, camera, sensori, WiFi provisioning
     simulator/         Python, simulazione rover per MVP
   apps/
@@ -23,7 +24,46 @@ tests/
   simulator/
 ```
 
-## AI Agent
+## Control Agent
+
+Percorso: `src/services/control_agent`
+
+Linguaggio: TypeScript su Node.js.
+
+Riferimenti principali:
+
+- Fastify per API HTTP;
+- mqtt per broker MQTT cloud;
+- ws per WebSocket realtime;
+- zod per validazione payload;
+- pino per logging JSON;
+- Docker per portabilita' PC/cloud.
+
+Responsabilita':
+
+- girare sul PC vicino al rover oppure in cloud economico;
+- mantenere connessione outbound con MQTT cloud;
+- ricevere comandi da app/dashboard;
+- validare e normalizzare comandi;
+- inoltrare comandi al rover controller;
+- pubblicare stato e telemetria;
+- fornire API HTTP/WebSocket portabili;
+- applicare safety timeout e stop prioritario;
+- fare relay leggero di MJPEG o handoff WebRTC.
+
+Sorgenti iniziali:
+
+- `src/main.ts`: bootstrap servizio;
+- `src/config.ts`: configurazione da ambiente;
+- `src/mqttBridge.ts`: subscribe/publish MQTT;
+- `src/commands.ts`: schema e parsing comandi;
+- `src/roverClient.ts`: client HTTP verso rover;
+- `src/safety.ts`: watchdog comandi;
+- `src/server.ts`: API Fastify.
+
+Nota architetturale: questo diventa il servizio applicativo principale perche' e' piu' semplice da portare su VPS/container/serverless a basso costo. Il componente Python resta utile per AI pesante, OpenCV o integrazioni hardware locali.
+
+## AI Agent opzionale
 
 Percorso: `src/services/ai_agent`
 
@@ -40,13 +80,10 @@ Riferimenti principali:
 
 Responsabilita':
 
-- connettersi al broker MQTT con connessione outbound;
-- ricevere comandi remoti e validarli;
-- inoltrare i comandi al rover reale o simulato;
-- raccogliere telemetria e pubblicarla sul broker;
-- gestire stream video iniziale MJPEG e futura pipeline WebRTC;
-- applicare safety timeout e comando stop prioritario;
-- esporre API locali `/health`, `/status`, `/telemetry`, `/stop`.
+- elaborare frame video con OpenCV o modelli AI locali;
+- produrre eventi AI per Control Agent/MQTT;
+- gestire funzioni che richiedono librerie native Python;
+- restare disaccoppiato dalla logica applicativa principale.
 
 Sorgenti iniziali:
 
@@ -80,7 +117,7 @@ Riferimenti principali:
 
 Responsabilita':
 
-- ricevere comandi dall'AI Agent sulla LAN;
+- ricevere comandi dal Control Agent sulla LAN;
 - controllare motori tramite driver TB6612FNG o L298N;
 - leggere sensori come IMU, ultrasuoni, encoder e batteria;
 - fornire telemetria locale;
@@ -145,7 +182,7 @@ Responsabilita':
 - simulare un rover senza hardware;
 - accettare gli stessi comandi del rover reale;
 - generare telemetria fittizia;
-- permettere lo sviluppo di AI Agent e app mobile prima dell'hardware.
+- permettere lo sviluppo di Control Agent e app mobile prima dell'hardware.
 
 Sorgenti iniziali:
 
@@ -188,7 +225,7 @@ Riferimenti principali:
 
 - Vite;
 - React;
-- MQTT over WebSocket o WebSocket verso AI Agent;
+- MQTT over WebSocket o WebSocket verso Control Agent;
 - player MJPEG/WebRTC.
 
 Responsabilita':
