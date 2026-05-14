@@ -8,6 +8,7 @@ venv/
 dist/
 build/
 out/
+.pio/
 
 # Logs
 *.log

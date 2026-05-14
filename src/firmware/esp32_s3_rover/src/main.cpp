@@ -3,10 +3,9 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
+#include "config.example.h"
 #if __has_include("config.h")
 #include "config.h"
-#else
-#include "config.example.h"
 #endif
 #include "pins.h"
 
@@ -261,7 +260,7 @@ void handleNetworkInterfaces() {
 }
 
 void handleStatus() {
-  StaticJsonDocument<kJsonCapacity> response;
+  JsonDocument response;
   fillStatus(response);
   sendJson(response);
 }
