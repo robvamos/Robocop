@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import type { RoverClient } from './roverClient.js';
 import type { SafetyManager } from './safety.js';
 import { parseCommand } from './commands.js';
+import { attachSignalingServer } from './signaling.js';
 
 export function buildServer(rover: RoverClient, safety: SafetyManager) {
   const app = Fastify({ logger: true });
@@ -29,6 +30,8 @@ export function buildServer(rover: RoverClient, safety: SafetyManager) {
     await rover.stop();
     return { stopped: true };
   });
+
+  attachSignalingServer(app);
 
   return app;
 }

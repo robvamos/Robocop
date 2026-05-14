@@ -31,8 +31,9 @@ Tenere separata la logica di controllo, broker, sessioni, telemetria e relay leg
 - inoltrare comandi al rover controller;
 - pubblicare telemetria e stato;
 - gestire WebSocket realtime per dashboard/app;
+- gestire signaling WebRTC per scambio SDP/ICE senza trasportare media;
 - applicare safety timeout e stop prioritario;
-- fare da relay leggero per stream MJPEG o handoff WebRTC;
+- fare da relay leggero solo per fallback/debug, non come percorso media normale;
 - essere eseguibile sia su PC sia in cloud a basso costo.
 
 ## Non responsabilita'
@@ -43,3 +44,21 @@ Tenere separata la logica di controllo, broker, sessioni, telemetria e relay leg
 - accesso diretto a camera hardware.
 
 Queste parti restano nel `rover_controller` o in un microservizio AI opzionale.
+
+## Signaling WebRTC
+
+Endpoint:
+
+```text
+WS /ws/signaling
+```
+
+Il Control Agent inoltra solo messaggi di signaling:
+
+- `join`
+- `offer`
+- `answer`
+- `ice-candidate`
+- `leave`
+
+Dopo la negoziazione, audio e video devono viaggiare direttamente tra rover e app via WebRTC quando ICE trova una rotta peer-to-peer. Un server TURN va usato solo come fallback quando NAT/firewall impediscono la connessione diretta.

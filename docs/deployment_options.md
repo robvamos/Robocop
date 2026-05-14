@@ -5,6 +5,8 @@ Il `control_agent` Node.js deve poter girare sia su PC domestico sia su cloud ec
 - Cloud Run come profilo principale serverless;
 - Compute Engine e2-micro come profilo always-on.
 
+Il flusso audio/video deve essere progettato separatamente: il cloud fa signaling, mentre il media deve passare direttamente tra rover e app mobile via WebRTC quando possibile.
+
 ## Scelta consigliata: Cloud Run + Node.js
 
 Cloud Run e' il default consigliato per il progetto.
@@ -106,6 +108,42 @@ Motivi per non sceglierlo come default:
 - meno naturale se il progetto usa container;
 - Cloud Run copre meglio il caso Node.js portabile PC/cloud.
 
+## Altre opzioni gratuite
+
+Cloudflare Workers / Pages:
+
+- ottimi per dashboard statica e signaling WebRTC leggero;
+- Workers Free ha limiti giornalieri adatti a prototipi;
+- Durable Objects puo' gestire stanze WebSocket;
+- non usare come media relay.
+
+Firebase / Firestore Spark:
+
+- utile per auth, stato sessione e mailbox signaling;
+- Firestore ha quota gratuita per letture/scritture/storage;
+- molto adatto se la app Flutter usa Firebase;
+- attenzione a non scrivere troppi ICE candidates.
+
+Supabase Free:
+
+- utile per auth, Postgres e realtime signaling;
+- adatto a prototipi;
+- i progetti free possono essere pausati dopo inattivita';
+- non adatto a processi always-on o media relay.
+
+Oracle Cloud Always Free:
+
+- interessante per VM always-on e persino TURN/coturn di fallback;
+- offre risorse Always Free generose, ma la disponibilita' puo' dipendere dalla regione;
+- le istanze idle possono essere reclamate;
+- richiede gestione sistemistica.
+
+GitHub Pages, Cloudflare Pages, Netlify, Vercel:
+
+- buoni per dashboard statica e documentazione;
+- non sono la sede giusta per il controllo realtime persistente;
+- Vercel Functions non sono adatte come WebSocket server.
+
 ## Doppia implementazione prevista
 
 Il repository prevede due profili:
@@ -139,6 +177,8 @@ COMMAND_TIMEOUT_MS=500
 Per MVP:
 
 - usare Cloud Run per API e dashboard remota;
+- usare WebRTC per media diretto rover-app;
+- usare il Control Agent solo come signaling server su `/ws/signaling`;
 - usare MQTT cloud per comandi/telemetria realtime;
 - usare Firestore o Cloud Storage solo se serve stato persistente semplice;
 - mantenere il PC/rover dietro NAT con connessioni outbound.
@@ -149,6 +189,13 @@ Per modalita' always-on o sviluppo tecnico:
 - eseguire `control_agent` con PM2 o systemd;
 - opzionalmente mettere Nginx davanti.
 
+Per costo zero massimo:
+
+- valutare Cloudflare Workers come signaling-only;
+- usare dashboard statica su Cloudflare Pages o GitHub Pages;
+- usare Firestore/Supabase free solo per stato leggero;
+- evitare TURN salvo fallback esplicito.
+
 ## Fonti ufficiali
 
 - Cloud Run free tier e scale-to-zero: https://cloud.google.com/run e https://cloud.google.com/run/docs/overview/what-is-cloud-run
@@ -156,3 +203,7 @@ Per modalita' always-on o sviluppo tecnico:
 - Google Cloud Free Tier: https://cloud.google.com/free/docs/gcp-free-tier
 - Compute Engine e2-micro Always Free: https://cloud.google.com/free/docs/compute-getting-started
 - App Engine Standard Node.js: https://cloud.google.com/appengine/docs/nodejs
+- Cloudflare Workers pricing/limits: https://developers.cloudflare.com/workers/platform/pricing/
+- Firebase Firestore pricing/free quota: https://firebase.google.com/docs/firestore/pricing
+- Supabase pricing: https://supabase.com/pricing
+- Oracle Always Free: https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm

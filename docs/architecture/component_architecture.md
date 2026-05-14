@@ -322,9 +322,8 @@ MVP:
 
 ```text
 Rover Camera
-  -> MJPEG locale
-  -> Control Agent
-  -> HTTP/WebSocket relay o endpoint protetto
+  -> WebRTC peer
+  -> rete diretta P2P quando possibile
   -> Mobile App
 ```
 
@@ -333,14 +332,20 @@ Evoluzione:
 ```text
 Rover Camera / Control Agent
   -> WebRTC
-  -> TURN/STUN o relay cloud
+  -> STUN per connessione diretta
+  -> TURN solo come fallback
   -> Mobile App / Browser
 ```
 
 Scelta consigliata:
 
-- MJPEG per prototipo rapido;
-- WebRTC quando servono latenza minore, audio bidirezionale e migliore gestione rete.
+- WebRTC come percorso media principale;
+- signaling tramite Control Agent, Cloud Run, Cloudflare Workers, Firebase o Supabase;
+- STUN per ottenere connessioni dirette dietro NAT;
+- TURN solo come fallback per reti che impediscono il P2P;
+- MJPEG solo per debug, LAN o prototipo rapido senza audio.
+
+Regola costi: audio/video non devono attraversare il cloud nel caso normale. Il cloud scambia solo offer, answer e ICE candidates.
 
 ### 3.4 AI locale
 
@@ -642,6 +647,25 @@ Profilo C - App Engine Standard:
 - meno flessibile di Cloud Run per un progetto containerizzato.
 
 Decisione: implementare entrambi i profili A e B in `infra/cloud-run` e `infra/compute-engine`, con Cloud Run come default.
+
+Profilo D - Cloudflare Workers signaling-only:
+
+- Worker/Durable Object per stanze WebRTC;
+- ottimo per scambiare SDP e ICE candidates;
+- non esegue il Control Agent completo;
+- non trasporta media.
+
+Profilo E - Firebase/Supabase signaling mailbox:
+
+- stato sessione e signaling asincrono;
+- utile per app mobile Flutter;
+- attenzione ai limiti di letture/scritture.
+
+Profilo F - Oracle Always Free:
+
+- VM always-on alternativa per Node.js, Nginx, PM2 o TURN di fallback;
+- utile se e2-micro GCP non basta;
+- richiede gestione operativa e controllo limiti.
 
 ## 9. Rischi principali
 
