@@ -1,0 +1,9 @@
+[project]
+name = "robocop-raspberry-pi-zero-2w-rover"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic",
+]

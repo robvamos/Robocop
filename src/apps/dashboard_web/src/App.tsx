@@ -3,7 +3,12 @@ import {
   LabeledField,
   ModeButton,
 } from './dashboardComponents';
-import { architectureBlocks, architectureLinks } from './dashboardDebugData';
+import {
+  getArchitectureBlocks,
+  getArchitectureLinks,
+  runtimeTargetPresets,
+  type RuntimeTarget,
+} from './dashboardDebugData';
 import {
   ArchitectureOverlay,
   JoystickPad,
@@ -21,8 +26,11 @@ import type { EmulatorStatus, LogEntry } from './dashboardTypes';
 
 export function App() {
   const [leftTab, setLeftTab] = useState<'mobile' | 'wiring'>('mobile');
-  const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:8010');
-  const [emulatorUiUrl, setEmulatorUiUrl] = useState('http://127.0.0.1:8091');
+  const [runtimeTarget, setRuntimeTarget] = useState<RuntimeTarget>('esp32_s3_rover');
+  const [baseUrl, setBaseUrl] = useState(runtimeTargetPresets.esp32_s3_rover.baseUrl);
+  const [emulatorUiUrl, setEmulatorUiUrl] = useState(
+    runtimeTargetPresets.esp32_s3_rover.emulatorUiUrl,
+  );
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [speed, setSpeed] = useState(68);
   const [throttle, setThrottle] = useState(0);
@@ -40,6 +48,15 @@ export function App() {
       text: 'Debug shell pronta: mobile app a sinistra, rover emulato a destra.',
     },
   ]);
+  const architectureBlocks = useMemo(
+    () => getArchitectureBlocks(runtimeTarget),
+    [runtimeTarget],
+  );
+  const architectureLinks = useMemo(
+    () => getArchitectureLinks(runtimeTarget),
+    [runtimeTarget],
+  );
+  const runtimePreset = runtimeTargetPresets[runtimeTarget];
 
   const telemetry = useMemo(
     () => [
@@ -61,6 +78,14 @@ export function App() {
       },
       ...current,
     ].slice(0, 8));
+  }
+
+  function switchRuntimeTarget(next: RuntimeTarget) {
+    const preset = runtimeTargetPresets[next];
+    setRuntimeTarget(next);
+    setBaseUrl(preset.baseUrl);
+    setEmulatorUiUrl(preset.emulatorUiUrl);
+    appendLog(`Target attivo: ${preset.runtimeTitle}.`, 'info');
   }
 
   async function fetchStatus() {
@@ -342,11 +367,14 @@ export function App() {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                       }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 12, color: palette.muted }}>Robocop Mobile</div>
-                        <div style={{ fontSize: 20, fontWeight: 700 }}>Controller</div>
-                      </div>
+                      >
+                        <div>
+                          <div style={{ fontSize: 12, color: palette.muted }}>Robocop Mobile</div>
+                          <div style={{ fontSize: 20, fontWeight: 700 }}>Controller</div>
+                          <div style={{ marginTop: 6, color: palette.glow, fontSize: 12 }}>
+                            {runtimePreset.runtimeTitle}
+                          </div>
+                        </div>
                       <div
                         style={{
                           width: 14,
@@ -385,6 +413,50 @@ export function App() {
                         <div style={{ marginTop: 6, color: palette.muted, fontSize: 12 }}>
                           Joystick al centro = zero velocita` e zero sterzo
                         </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: 10,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => switchRuntimeTarget('esp32_s3_rover')}
+                          style={
+                            runtimeTarget === 'esp32_s3_rover'
+                              ? primaryButton
+                              : secondaryButton
+                          }
+                        >
+                          ESP32-S3
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => switchRuntimeTarget('raspberry_pi_zero_2w_rover')}
+                          style={
+                            runtimeTarget === 'raspberry_pi_zero_2w_rover'
+                              ? primaryButton
+                              : secondaryButton
+                          }
+                        >
+                          Raspberry Pi
+                        </button>
+                      </div>
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 16,
+                          backgroundColor: 'rgba(16,40,59,0.74)',
+                          border: `1px solid ${palette.lineSoft}`,
+                          color: palette.muted,
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {runtimePreset.description}
                       </div>
 
                       <div
@@ -511,7 +583,7 @@ export function App() {
                     >
                       <WiringCard
                         label="Chip"
-                        value={status?.deviceId ?? 'offline'}
+                        value={status?.deviceId ?? runtimePreset.label}
                         accent={palette.glow}
                       />
                       <WiringCard
@@ -584,7 +656,7 @@ export function App() {
                 }}
               >
                 <LabeledField
-                  label="Emulator base URL"
+                  label="Runtime base URL"
                   value={baseUrl}
                   onChange={setBaseUrl}
                   placeholder="http://127.0.0.1:8010"
@@ -613,6 +685,20 @@ export function App() {
                     gap: 10,
                   }}
                 >
+                  <div
+                    style={{
+                      borderRadius: 16,
+                      padding: 14,
+                      backgroundColor: 'rgba(16,40,59,0.72)',
+                      border: `1px solid ${palette.lineSoft}`,
+                    }}
+                  >
+                    <div style={{ color: palette.glow, fontSize: 12 }}>Runtime attivo</div>
+                    <div style={{ marginTop: 6, fontSize: 18 }}>{runtimePreset.runtimeTitle}</div>
+                    <div style={{ marginTop: 8, color: palette.muted, fontSize: 13 }}>
+                      {runtimePreset.description}
+                    </div>
+                  </div>
                   {architectureBlocks.map((block) => (
                     <div
                       key={block.id}
