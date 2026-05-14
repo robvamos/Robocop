@@ -4,7 +4,11 @@ import {
   ModeButton,
 } from './dashboardComponents';
 import { architectureBlocks, architectureLinks } from './dashboardDebugData';
-import { ArchitectureOverlay, WiringCard } from './dashboardDebugComponents';
+import {
+  ArchitectureOverlay,
+  JoystickPad,
+  WiringCard,
+} from './dashboardDebugComponents';
 import {
   dashboardShell,
   hintText,
@@ -125,6 +129,16 @@ export function App() {
     return () => window.clearInterval(timer);
   }, [autoDrive, baseUrl, speed, steering, throttle]);
 
+  function handleJoystickChange(next: { steering: number; throttle: number }) {
+    setSteering(next.steering);
+    setThrottle(next.throttle);
+  }
+
+  function handleJoystickRelease() {
+    setSteering(0);
+    setThrottle(0);
+  }
+
   async function postJson(
     path: string,
     body: unknown,
@@ -157,14 +171,6 @@ export function App() {
     } finally {
       setIsSending(false);
     }
-  }
-
-  async function sendDrive(x: number, y: number) {
-    await postJson(
-      '/drive',
-      { x, y, speed },
-      `Drive inviato: x=${x.toFixed(2)} y=${y.toFixed(2)} speed=${speed}`,
-    );
   }
 
   async function sendStop() {
@@ -263,12 +269,13 @@ export function App() {
 
         <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.6fr) minmax(320px, 0.9fr)',
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 20,
+            alignItems: 'flex-start',
           }}
         >
-          <article style={{ ...panelStyle, padding: 18 }}>
+          <article style={{ ...panelStyle, padding: 18, flex: '1 1 760px', minWidth: 0 }}>
             <div
               style={{
                 display: 'flex',
@@ -298,17 +305,19 @@ export function App() {
             {leftTab === 'mobile' ? (
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(260px, 360px) minmax(0, 1fr)',
+                  display: 'flex',
                   gap: 20,
-                  alignItems: 'start',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
                 }}
               >
                 <div
                   style={{
+                    flex: '0 1 360px',
+                    minWidth: 300,
                     margin: '0 auto',
                     width: '100%',
-                    maxWidth: 320,
+                    maxWidth: 360,
                     borderRadius: 36,
                     padding: 16,
                     border: `1px solid ${palette.line}`,
@@ -354,12 +363,10 @@ export function App() {
                     <div
                       style={{
                         borderRadius: 22,
-                        aspectRatio: '9 / 16',
                         background:
                           'linear-gradient(180deg, rgba(9,25,36,0.96), rgba(5,10,16,0.98))',
                         border: `1px solid ${palette.line}`,
                         display: 'grid',
-                        gridTemplateRows: 'auto auto 1fr auto',
                         gap: 14,
                         padding: 16,
                       }}
@@ -376,8 +383,7 @@ export function App() {
                           {status?.network.interface.ssid ?? 'Robocop-FreeNet'}
                         </div>
                         <div style={{ marginTop: 6, color: palette.muted, fontSize: 12 }}>
-                          {status?.motion.direction ?? 'idle'} /{' '}
-                          {status?.motion.steering ?? 'straight'}
+                          Joystick al centro = zero velocita` e zero sterzo
                         </div>
                       </div>
 
@@ -404,44 +410,39 @@ export function App() {
                         ))}
                       </div>
 
-                      <div
-                        style={{
-                          display: 'grid',
-                          placeItems: 'center',
-                          gap: 10,
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setThrottle(100);
-                            setSteering(0);
-                            void sendDrive(0, 1);
-                          }}
-                          style={drivePadButtonStyle}
-                          disabled={isSending}
-                        >
-                          Avanti
-                        </button>
+                      <JoystickPad
+                        steering={steering}
+                        throttle={throttle}
+                        onChange={handleJoystickChange}
+                        onRelease={handleJoystickRelease}
+                      />
+
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        <label style={{ display: 'grid', gap: 8 }}>
+                          <span style={{ color: palette.muted, fontSize: 12 }}>
+                            Sensibilita` motore {speed}
+                          </span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={speed}
+                            onChange={(event) => setSpeed(Number(event.target.value))}
+                          />
+                        </label>
                         <div
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 1fr 1fr',
+                            gridTemplateColumns: '1fr 1fr',
                             gap: 10,
-                            width: '100%',
                           }}
                         >
                           <button
                             type="button"
-                            onClick={() => {
-                              setThrottle(55);
-                              setSteering(-75);
-                              void sendDrive(-0.75, 0.55);
-                            }}
-                            style={drivePadButtonStyle}
-                            disabled={isSending}
+                            onClick={() => setAutoDrive((value) => !value)}
+                            style={secondaryButton}
                           >
-                            Sinistra
+                            {autoDrive ? 'Auto drive ON' : 'Auto drive OFF'}
                           </button>
                           <button
                             type="button"
@@ -456,70 +457,7 @@ export function App() {
                           >
                             STOP
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setThrottle(55);
-                              setSteering(75);
-                              void sendDrive(0.75, 0.55);
-                            }}
-                            style={drivePadButtonStyle}
-                            disabled={isSending}
-                          >
-                            Destra
-                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setThrottle(-80);
-                            setSteering(0);
-                            void sendDrive(0, -0.8);
-                          }}
-                          style={drivePadButtonStyle}
-                          disabled={isSending}
-                        >
-                          Retro
-                        </button>
-                      </div>
-
-                      <div style={{ display: 'grid', gap: 10 }}>
-                        <label style={{ display: 'grid', gap: 8 }}>
-                          <span style={{ color: palette.muted, fontSize: 12 }}>
-                            Speed {speed}
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={speed}
-                            onChange={(event) => setSpeed(Number(event.target.value))}
-                          />
-                        </label>
-                        <label style={{ display: 'grid', gap: 8 }}>
-                          <span style={{ color: palette.muted, fontSize: 12 }}>
-                            Trazione {throttle}%
-                          </span>
-                          <input
-                            type="range"
-                            min={-100}
-                            max={100}
-                            value={throttle}
-                            onChange={(event) => setThrottle(Number(event.target.value))}
-                          />
-                        </label>
-                        <label style={{ display: 'grid', gap: 8 }}>
-                          <span style={{ color: palette.muted, fontSize: 12 }}>
-                            Sterzo {steering}%
-                          </span>
-                          <input
-                            type="range"
-                            min={-100}
-                            max={100}
-                            value={steering}
-                            onChange={(event) => setSteering(Number(event.target.value))}
-                          />
-                        </label>
                         <div
                           style={{
                             display: 'grid',
@@ -527,25 +465,6 @@ export function App() {
                             gap: 10,
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void sendDrive(steering / 100, throttle / 100)
-                            }
-                            style={primaryButton}
-                            disabled={isSending}
-                          >
-                            Applica slider
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAutoDrive((value) => !value)}
-                            style={secondaryButton}
-                          >
-                            {autoDrive ? 'Auto drive ON' : 'Auto drive OFF'}
-                          </button>
-                        </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
                           <button
                             type="button"
                             onClick={() => void toggleCamera()}
@@ -567,7 +486,14 @@ export function App() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gap: 16 }}>
+                <div
+                  style={{
+                    flex: '1 1 420px',
+                    minWidth: 320,
+                    display: 'grid',
+                    gap: 16,
+                  }}
+                >
                   <section
                     style={{
                       ...panelStyle,
@@ -714,7 +640,7 @@ export function App() {
             )}
           </article>
 
-          <aside style={{ display: 'grid', gap: 20 }}>
+          <aside style={{ display: 'grid', gap: 20, flex: '1 1 420px', minWidth: 320 }}>
             <section style={{ ...panelStyle, padding: 18, minHeight: 780 }}>
               <div
                 style={{
