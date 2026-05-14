@@ -1,0 +1,17 @@
+name: robocop_mobile
+description: Mobile app for Robocop rover remote control.
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mqtt_client: ^10.0.0
+  flutter_secure_storage: ^9.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

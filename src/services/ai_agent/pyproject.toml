@@ -1,0 +1,16 @@
+[project]
+name = "robocop-ai-agent"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic-settings",
+  "paho-mqtt",
+  "httpx",
+  "opencv-python",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["../../../tests/ai_agent"]
