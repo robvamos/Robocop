@@ -20,6 +20,7 @@ La cartella `feed/` contiene solo documenti sorgente da analizzare. Gli artefatt
 - `infra/cloud-run/` - profilo deploy Cloud Run per costi minimi e scale-to-zero
 - `infra/compute-engine/` - profilo deploy e2-micro always-on
 - `infra/cloudflare-workers-signaling/` - profilo signaling WebRTC edge, senza media relay
+- `infra/turn/` - profilo TURN/coturn isolato per fallback audio-video
 - `tests/` - test automatici
 
 ## GitHub
@@ -34,4 +35,5 @@ This project is intended to be connected to a GitHub repository once GitHub acce
 - `docs/deployment_options.md`
 - `docs/free_deploy_matrix.md`
 - `docs/media_transport.md`
+- `docs/turn_server.md`
 - `infra/mqtt/topics.md`

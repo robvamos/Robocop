@@ -343,9 +343,12 @@ Scelta consigliata:
 - signaling tramite Control Agent, Cloud Run, Cloudflare Workers, Firebase o Supabase;
 - STUN per ottenere connessioni dirette dietro NAT;
 - TURN solo come fallback per reti che impediscono il P2P;
+- TURN isolato come servizio separato da Control Agent;
 - MJPEG solo per debug, LAN o prototipo rapido senza audio.
 
 Regola costi: audio/video non devono attraversare il cloud nel caso normale. Il cloud scambia solo offer, answer e ICE candidates.
+
+Quando WebRTC seleziona un candidate `relay`, il traffico audio/video passa dal TURN server e consuma banda cloud. Il sistema deve ridurre bitrate, applicare timeout e registrare metriche di egress.
 
 ### 3.4 AI locale
 
@@ -666,6 +669,14 @@ Profilo F - Oracle Always Free:
 - VM always-on alternativa per Node.js, Nginx, PM2 o TURN di fallback;
 - utile se e2-micro GCP non basta;
 - richiede gestione operativa e controllo limiti.
+
+Profilo G - TURN isolato:
+
+- coturn su VM separata o servizio gestito;
+- credenziali temporanee;
+- porte UDP/TCP dedicate;
+- metriche banda obbligatorie;
+- fallback soltanto, mai percorso media primario.
 
 ## 9. Rischi principali
 

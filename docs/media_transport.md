@@ -31,6 +31,8 @@ Il signaling puo' passare da Cloud Run, Cloudflare Workers, Firebase, Supabase o
 7. Se la connessione diretta riesce, audio/video fluiscono peer-to-peer.
 8. Se fallisce, si usa TURN come fallback consapevole.
 
+TURN e' documentato separatamente in `docs/turn_server.md` perche' ha requisiti di banda e sicurezza diversi dal resto del backend.
+
 ## STUN e TURN
 
 STUN:
@@ -46,6 +48,8 @@ TURN:
 - aumenta affidabilita' quando ci sono NAT simmetrici, firewall aziendali o reti mobili problematiche;
 - puo' generare costi di banda;
 - va trattato come fallback, non come percorso principale.
+
+Il servizio TURN deve essere isolato in `infra/turn`, preferibilmente su una VM con limiti di banda chiari.
 
 ## Impatto sui costi
 

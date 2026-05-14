@@ -138,6 +138,14 @@ Oracle Cloud Always Free:
 - le istanze idle possono essere reclamate;
 - richiede gestione sistemistica.
 
+TURN/coturn:
+
+- deve vivere in un profilo separato, non dentro Cloud Run e non dentro il Control Agent;
+- va ospitato su VM o servizio TURN gestito;
+- Oracle Always Free e' una candidata interessante per test grazie alla quota outbound;
+- Compute Engine e2-micro va bene solo per test limitati;
+- documentazione dedicata in `docs/turn_server.md` e `infra/turn`.
+
 GitHub Pages, Cloudflare Pages, Netlify, Vercel:
 
 - buoni per dashboard statica e documentazione;
