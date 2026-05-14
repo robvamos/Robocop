@@ -17,9 +17,17 @@ export class MqttBridge {
       this.client?.subscribe(commandTopic);
     });
 
+    this.client.on('error', (error) => {
+      console.error('MQTT client error', error);
+    });
+
     this.client.on('message', async (_topic, message) => {
-      const payload = JSON.parse(message.toString('utf8'));
-      await onCommand(payload);
+      try {
+        const payload = JSON.parse(message.toString('utf8'));
+        await onCommand(payload);
+      } catch (error) {
+        console.error('MQTT command handling failed', error);
+      }
     });
   }
 
@@ -28,5 +36,10 @@ export class MqttBridge {
       `rover/${this.settings.deviceId}/telemetry`,
       JSON.stringify(payload),
     );
+  }
+
+  disconnect(): void {
+    this.client?.end(true);
+    this.client = undefined;
   }
 }

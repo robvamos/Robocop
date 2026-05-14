@@ -7,7 +7,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
     "start": "node dist/main.js",
-    "test": "node --test"
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "fastify": "latest",

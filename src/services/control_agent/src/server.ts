@@ -28,6 +28,7 @@ export function buildServer(rover: RoverClient, safety: SafetyManager) {
 
   app.post('/stop', async () => {
     await rover.stop();
+    safety.acknowledgeStop();
     return { stopped: true };
   });
 
