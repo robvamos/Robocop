@@ -16,6 +16,7 @@ npm-debug.log*
 # Environment files
 .env
 .env.*
+src/firmware/*/include/config.h
 
 # OS/editor
 .DS_Store

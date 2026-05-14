@@ -2,6 +2,9 @@
 
 Firmware base per retrofit Nikko Super Dominator con ESP32-S3-CAM o board ESP32-S3 con camera.
 
+Questa cartella contiene solo l'implementazione specifica per il chip `esp32_s3`.
+Ogni altro chip deve vivere in una cartella dedicata con il proprio nome sotto `src/firmware/`.
+
 ## Funzioni
 
 - WiFi station;
@@ -11,7 +14,17 @@ Firmware base per retrofit Nikko Super Dominator con ESP32-S3-CAM o board ESP32-
 - PWM progressivo;
 - watchdog locale;
 - status JSON;
-- camera predisposta.
+- camera on/off via API;
+- endpoint rete e camera compatibili con l'emulatore.
+
+## Endpoint MVP
+
+- `POST /drive`
+- `POST /stop`
+- `POST /camera/power`
+- `GET /camera/status`
+- `GET /network/interfaces`
+- `GET /status`
 
 ## Build
 
@@ -32,6 +45,9 @@ include/config.example.h -> include/config.h
 ```
 
 e impostare SSID/password o provisioning futuro.
+
+Se `config.h` non esiste ancora, il firmware usa `config.example.h` come fallback
+per partire con la configurazione di sviluppo.
 
 ## Sicurezza
 

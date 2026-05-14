@@ -1,9 +1,9 @@
 #pragma once
 
-#define WIFI_SSID "CHANGE_ME"
-#define WIFI_PASSWORD "CHANGE_ME"
+#define WIFI_SSID "Robocop-FreeNet"
+#define WIFI_PASSWORD ""
 
-#define DEVICE_ID "nikko-super-dominator-001"
+#define DEVICE_ID "esp32-s3-cam-dev-001"
 #define HTTP_PORT 80
 
 #define COMMAND_TIMEOUT_MS 500
