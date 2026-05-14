@@ -1,5 +1,7 @@
 # Robocop
 
+Remote Drone.
+
 Robocop e' una piattaforma modulare per controllare da remoto un rover terrestre con video, telemetria, comandi realtime e futura AI locale.
 
 La cartella `feed/` contiene solo documenti sorgente da analizzare. Gli artefatti prodotti dal progetto vivono in `docs/`, `src/`, `infra/` e `tests/`.
