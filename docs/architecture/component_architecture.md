@@ -604,6 +604,10 @@ Esempio aggiunta rete:
 ## 8. Decisioni tecniche consigliate
 
 - usare MQTT Cloud per il controllo e la telemetria;
+- usare Cloud Run + Node.js come deploy cloud principale del Control Agent;
+- prevedere Compute Engine e2-micro come deploy alternativo always-on;
+- mantenere App Engine Standard solo come alternativa semplice, non default;
+- progettare il Control Agent per girare senza modifiche su PC, Cloud Run o VM;
 - non usare MQTT per lo streaming video continuo;
 - partire con MJPEG per ridurre complessita';
 - mettere il fail-safe sia nel Control Agent sia nel Rover Controller;
@@ -612,6 +616,32 @@ Esempio aggiunta rete:
 - inserire sempre `deviceId`, `seq` e timestamp nei messaggi importanti;
 - tenere Home Assistant come integrazione MQTT futura, non come dipendenza dell'MVP;
 - progettare il rover come componente sostituibile: simulatore, Raspberry reale, ESP32.
+
+### 8.1 Deploy gratuito o low-cost
+
+Profilo A - Cloud Run consigliato:
+
+- container Node.js per `control_agent`;
+- scala a zero quando non riceve traffico;
+- adatto ad API, dashboard leggere, webhook e routing comandi;
+- usare Firestore o Cloud Storage solo se serve stato persistente;
+- mantenere MQTT cloud per realtime e connessioni outbound;
+- evitare connessioni WebSocket sempre aperte se si vuole restare nel modello scale-to-zero.
+
+Profilo B - Compute Engine e2-micro:
+
+- VM Linux sempre accesa;
+- adatta a WebSocket persistenti, PM2, Nginx, piccoli worker e broker leggero;
+- interessante se si vuole una macchina sempre viva;
+- usare regioni e limiti Always Free supportati ufficialmente.
+
+Profilo C - App Engine Standard:
+
+- deploy semplice per Node.js;
+- free tier disponibile;
+- meno flessibile di Cloud Run per un progetto containerizzato.
+
+Decisione: implementare entrambi i profili A e B in `infra/cloud-run` e `infra/compute-engine`, con Cloud Run come default.
 
 ## 9. Rischi principali
 

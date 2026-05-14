@@ -17,6 +17,8 @@ La cartella `feed/` contiene solo documenti sorgente da analizzare. Gli artefatt
 - `src/apps/mobile_flutter/` - app mobile Flutter
 - `src/apps/dashboard_web/` - dashboard React/Vite
 - `infra/mqtt/` - topic MQTT e ACL di riferimento
+- `infra/cloud-run/` - profilo deploy Cloud Run per costi minimi e scale-to-zero
+- `infra/compute-engine/` - profilo deploy e2-micro always-on
 - `tests/` - test automatici
 
 ## GitHub
@@ -28,4 +30,5 @@ This project is intended to be connected to a GitHub repository once GitHub acce
 - `docs/architecture/component_architecture.md`
 - `docs/modules.md`
 - `docs/codex_skills.md`
+- `docs/deployment_options.md`
 - `infra/mqtt/topics.md`

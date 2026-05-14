@@ -16,6 +16,8 @@ src/
     dashboard_web/     TypeScript/React, debug e controllo da browser
 infra/
   mqtt/                topic, ACL, naming convention
+  cloud-run/           deploy serverless gratuito/low-cost
+  compute-engine/      deploy VM always-on e2-micro
 docs/
   architecture/        architettura e decisioni progettuali
 tests/
@@ -255,3 +257,27 @@ File iniziali:
 
 - `topics.md`: convenzioni topic e payload;
 - `acl.example.conf`: esempio di permessi broker.
+
+## Deploy cloud gratuito o low-cost
+
+Percorsi:
+
+- `infra/cloud-run`
+- `infra/compute-engine`
+
+Scelta consigliata:
+
+- Cloud Run + `control_agent` Node.js come profilo principale;
+- Compute Engine e2-micro come profilo alternativo se serve una macchina sempre accesa;
+- App Engine Standard solo come fallback semplice se non si vuole gestire container.
+
+Responsabilita':
+
+- mantenere il `control_agent` deployabile con variabili ambiente;
+- non vincolare il codice applicativo a un singolo provider runtime;
+- permettere scale-to-zero quando non serve connessione persistente;
+- permettere always-on quando serve WebSocket o worker continuo.
+
+Documento di riferimento:
+
+- `docs/deployment_options.md`
