@@ -24,4 +24,5 @@ src/firmware/*/include/config.h
 Thumbs.db
 .vscode/
 .idea/
+__pycache__/
 
